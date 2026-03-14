@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
+import { sendWelcomeEmail } from '@/lib/actions/email'
 
 type Mode = 'signin' | 'signup'
 
@@ -46,6 +47,8 @@ export default function AuthForm() {
         return
       }
       setSuccessMessage('Check your email for a confirmation link to complete sign up.')
+      // Send welcome email (fire-and-forget, don't block signup flow)
+      sendWelcomeEmail(email, fullName).catch(console.error)
       setLoading(false)
       return
     }
@@ -57,7 +60,7 @@ export default function AuthForm() {
     setLoading(true)
     setError(null)
     const { error } = await supabase.auth.signInWithPassword({
-      email: 'test@example.com',
+      email: 'dpeterkelly@gmail.com',
       password: 'testpassword123',
     })
     if (error) {

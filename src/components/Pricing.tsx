@@ -5,9 +5,9 @@ import Link from 'next/link'
 const plans = [
   {
     title: 'SELF HOSTED',
-    price: '$5',
-    priceSuffix: '/mo',
-    description: 'Flexible support',
+    price: 'Free',
+    priceSuffix: '',
+    description: 'Support and training options start at $5 (one-time).',
     cta: '/signup?plan=self-hosted',
     highlighted: false,
     stagger: 'stagger-1',
@@ -23,9 +23,9 @@ const plans = [
   },
   {
     title: 'LARGE VOLUME',
-    price: 'At Cost',
+    price: 'Personalized Plan',
     priceSuffix: '',
-    description: 'Flexible retainer, SMS credits at cost',
+    description: 'More affordable messaging rates available for campaigns with large volume. Pay one per cycle fee, starting at $250, and get SMS credits at cost.',
     cta: '/signup?plan=enterprise',
     highlighted: false,
     stagger: 'stagger-3',

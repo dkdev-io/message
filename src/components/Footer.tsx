@@ -46,6 +46,14 @@ const columns = [
     ),
   },
   {
+    title: 'VOTERCONTACT.IO',
+    content: (
+      <p className="text-[var(--color-muted)] text-sm">
+        Visit <a href="https://votercontact.io" className="hover:text-[var(--color-accent)] transition underline">votercontact.io</a> to learn more about our full suite of political technology tools.
+      </p>
+    ),
+  },
+  {
     title: 'COMING SOON',
     content: (
       <div className="flex flex-col">
@@ -64,7 +72,7 @@ const columns = [
 ]
 
 export default function Footer() {
-  const [openSections, setOpenSections] = useState<boolean[]>([false, false, false, false])
+  const [openSections, setOpenSections] = useState<boolean[]>([false, false, false, false, false])
 
   const toggleSection = (index: number) => {
     setOpenSections((prev) => {
@@ -75,13 +83,14 @@ export default function Footer() {
   }
 
   return (
-    <footer className="bg-[var(--color-surface)] border-t border-[var(--color-muted)]/20 py-6">
+    <footer className="bg-[var(--color-surface)] border-t border-[var(--color-muted)]/20 py-4">
       <div className="max-w-[1200px] mx-auto px-6">
-        <div className="max-w-2xl mx-auto">
+        <h3 className="font-display text-lg text-[var(--color-text)] text-center mb-2">LEARN MORE</h3>
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-x-6 gap-y-0">
           {columns.map((col, i) => (
-            <div key={col.title} className="border-b border-[var(--color-muted)]/10 last:border-b-0">
+            <div key={col.title} className="text-center">
               <button
-                className="flex w-full items-center justify-center gap-2 py-3"
+                className="flex w-full items-center justify-center gap-1.5 py-2"
                 onClick={() => toggleSection(i)}
               >
                 <h4 className="font-display text-sm text-[var(--color-text)]">{col.title}</h4>
@@ -93,8 +102,8 @@ export default function Footer() {
               </button>
 
               <div
-                className={`overflow-hidden transition-all duration-200 text-center ${
-                  openSections[i] ? 'max-h-40 pb-3' : 'max-h-0'
+                className={`overflow-hidden transition-all duration-200 ${
+                  openSections[i] ? 'max-h-40 pb-2' : 'max-h-0'
                 }`}
               >
                 {col.content}
@@ -104,11 +113,11 @@ export default function Footer() {
         </div>
 
         {/* Bottom bar */}
-        <div className="mt-4 pt-4 border-t border-[var(--color-muted)]/20 flex flex-col items-center gap-2">
-          <ThemeToggle />
+        <div className="mt-2 pt-2 border-t border-[var(--color-muted)]/20 flex items-center justify-center gap-4">
           <p className="text-[var(--color-muted)] text-xs">
-            &copy; 2026 Dev/D. All rights reserved.
+            Website by Dev/D.
           </p>
+          <ThemeToggle />
         </div>
       </div>
     </footer>

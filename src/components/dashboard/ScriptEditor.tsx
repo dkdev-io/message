@@ -2,7 +2,8 @@
 
 import { useState, useTransition } from 'react'
 import { saveScript } from '@/lib/actions/scripts'
-import { Save, Clock, ChevronDown, ChevronUp, Check, AlertCircle } from 'lucide-react'
+import { suggestScript } from '@/lib/actions/ai'
+import { Save, Clock, ChevronDown, ChevronUp, Check, AlertCircle, Sparkles, Loader2, X, Copy } from 'lucide-react'
 
 interface ScriptVersion {
   version: number
@@ -23,6 +24,12 @@ export default function ScriptEditor({ campaignId, initialScript, versions }: Sc
   const [showVersions, setShowVersions] = useState(false)
   const [feedback, setFeedback] = useState<{ type: 'success' | 'error'; message: string } | null>(null)
   const [isPending, startTransition] = useTransition()
+
+  const [aiOpen, setAiOpen] = useState(false)
+  const [aiInstruction, setAiInstruction] = useState('')
+  const [aiSuggestion, setAiSuggestion] = useState<string | null>(null)
+  const [aiLoading, setAiLoading] = useState(false)
+  const [aiError, setAiError] = useState<string | null>(null)
 
   const charCount = body.length
   const isOverLimit = charCount > MAX_CHARS
@@ -45,6 +52,32 @@ export default function ScriptEditor({ campaignId, initialScript, versions }: Sc
     setBody(v.body)
     setShowVersions(false)
     setFeedback(null)
+  }
+
+  async function handleGenerate() {
+    if (!aiInstruction.trim() || aiLoading) return
+
+    setAiError(null)
+    setAiSuggestion(null)
+    setAiLoading(true)
+
+    try {
+      const result = await suggestScript(campaignId, aiInstruction)
+      setAiSuggestion(result)
+    } catch (err) {
+      setAiError(err instanceof Error ? err.message : 'Failed to generate suggestion.')
+    } finally {
+      setAiLoading(false)
+    }
+  }
+
+  function handleUseSuggestion() {
+    if (aiSuggestion) {
+      setBody(aiSuggestion)
+      setAiSuggestion(null)
+      setAiInstruction('')
+      setFeedback(null)
+    }
   }
 
   return (
@@ -127,6 +160,95 @@ export default function ScriptEditor({ campaignId, initialScript, versions }: Sc
           </div>
         </div>
       )}
+
+      {/* AI Script Assistant */}
+      <div className="border border-[var(--color-muted)]/20 rounded-lg overflow-hidden">
+        <button
+          onClick={() => setAiOpen(!aiOpen)}
+          className="w-full flex items-center justify-between px-4 py-3 hover:bg-[var(--color-muted)]/5 transition-colors"
+        >
+          <span className="inline-flex items-center gap-2 text-sm font-display text-[var(--color-text)]">
+            <Sparkles size={14} className="text-[var(--color-accent)]" />
+            AI SCRIPT ASSISTANT
+          </span>
+          {aiOpen ? <ChevronUp size={14} className="text-[var(--color-muted)]" /> : <ChevronDown size={14} className="text-[var(--color-muted)]" />}
+        </button>
+
+        {aiOpen && (
+          <div className="px-4 pb-4 space-y-3 border-t border-[var(--color-muted)]/10">
+            <p className="text-xs text-[var(--color-muted)] pt-3">
+              Describe what you want and the AI will draft a script suggestion for you to review.
+            </p>
+
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={aiInstruction}
+                onChange={(e) => setAiInstruction(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault()
+                    handleGenerate()
+                  }
+                }}
+                placeholder="e.g. Write an intro message about healthcare reform"
+                className="flex-1 bg-[var(--color-bg)] border border-[var(--color-muted)]/30 rounded-lg px-3 py-2 text-sm text-[var(--color-text)] placeholder:text-[var(--color-muted)]/50 focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]/50 focus:border-[var(--color-accent)] transition-colors"
+              />
+              <button
+                onClick={handleGenerate}
+                disabled={aiLoading || !aiInstruction.trim()}
+                className="inline-flex items-center gap-2 bg-[var(--color-accent)] hover:bg-[var(--color-accent-hover)] disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-lg px-4 py-2 font-display text-sm transition-colors whitespace-nowrap"
+              >
+                {aiLoading ? (
+                  <>
+                    <Loader2 size={14} className="animate-spin" />
+                    GENERATING...
+                  </>
+                ) : (
+                  <>
+                    <Sparkles size={14} />
+                    GENERATE
+                  </>
+                )}
+              </button>
+            </div>
+
+            {aiError && (
+              <div className="flex items-center gap-2 text-sm px-3 py-2 rounded-lg bg-red-500/10 text-red-500">
+                <AlertCircle size={14} />
+                {aiError}
+              </div>
+            )}
+
+            {aiSuggestion && (
+              <div className="space-y-2">
+                <div className="bg-[var(--color-bg)] border border-[var(--color-accent)]/30 rounded-lg p-3">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-xs font-display text-[var(--color-accent)]">AI SUGGESTION</span>
+                    <button
+                      onClick={() => setAiSuggestion(null)}
+                      className="text-[var(--color-muted)] hover:text-[var(--color-text)] transition-colors"
+                    >
+                      <X size={14} />
+                    </button>
+                  </div>
+                  <p className="text-sm text-[var(--color-text)] whitespace-pre-wrap font-mono">{aiSuggestion}</p>
+                  <div className="text-xs text-[var(--color-muted)] mt-2">
+                    {aiSuggestion.length} / {MAX_CHARS} characters
+                  </div>
+                </div>
+                <button
+                  onClick={handleUseSuggestion}
+                  className="inline-flex items-center gap-2 bg-[var(--color-accent)] hover:bg-[var(--color-accent-hover)] text-white rounded-lg px-4 py-2 font-display text-sm transition-colors"
+                >
+                  <Copy size={14} />
+                  USE THIS
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
     </div>
   )
 }

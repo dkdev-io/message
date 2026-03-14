@@ -35,10 +35,10 @@ export default function Hero() {
         </p>
 
         <Link
-          href="/signup"
+          href="/login"
           className="mt-8 bg-[var(--color-accent)] hover:bg-[var(--color-accent-hover)] text-white rounded-full px-8 py-4 font-bold hover:translate-y-[-2px] hover:shadow-lg transition animate-fade-up animate-delay-600"
         >
-          Don&apos;t Get Hustled
+          Get Started
         </Link>
       </div>
     </section>

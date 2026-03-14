@@ -64,7 +64,9 @@ export async function sendMessage(campaignId: string, voterId: string, body: str
       from: profile.twilio_phone_number,
       to: voter.phone,
       body,
-      statusCallback: `${process.env.NEXT_PUBLIC_SUPABASE_URL ? '' : ''}${process.env.NEXT_PUBLIC_APP_URL || ''}/message/api/webhooks/twilio/status`,
+      statusCallback: process.env.NEXT_PUBLIC_APP_URL
+        ? `${process.env.NEXT_PUBLIC_APP_URL}/message/api/webhooks/twilio/status`
+        : undefined,
     })
 
     await supabase

@@ -1,9 +1,10 @@
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
-import { ArrowLeft, Pencil, Trash2, Play, Pause, CheckCircle, FileText, Users, MessageSquare, GitBranch } from 'lucide-react'
+import { ArrowLeft, Pencil, Trash2, Play, Pause, CheckCircle, FileText, Users, MessageSquare, GitBranch, FolderOpen } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
 import { updateCampaignStatus } from '@/lib/actions/campaigns'
 import DeleteCampaignButton from '@/components/dashboard/DeleteCampaignButton'
+import CampaignDocuments from '@/components/dashboard/CampaignDocuments'
 import ScriptEditor from '@/components/dashboard/ScriptEditor'
 import ResponseBranches from '@/components/dashboard/ResponseBranches'
 import VoterUpload from '@/components/dashboard/VoterUpload'
@@ -46,6 +47,13 @@ export default async function CampaignDetailPage({
     .eq('campaign_id', id)
     .eq('is_active', true)
     .order('sort_order', { ascending: true })
+
+  // Load campaign documents
+  const { data: campaignDocuments } = await supabase
+    .from('campaign_documents')
+    .select('*')
+    .eq('campaign_id', id)
+    .order('created_at', { ascending: false })
 
   // Load first 20 voters
   const { data: voters } = await supabase
@@ -168,6 +176,21 @@ export default async function CampaignDetailPage({
           <p className="font-display text-2xl text-[var(--color-text)]">{versions.length}</p>
           <p className="text-xs text-[var(--color-muted)]">Script Versions</p>
         </div>
+      </div>
+
+      {/* Campaign Documents Section */}
+      <div className="bg-[var(--color-surface)] rounded-xl border border-[var(--color-muted)]/20 p-6">
+        <div className="flex items-center gap-2 mb-4">
+          <FolderOpen size={18} className="text-[var(--color-accent)]" />
+          <h2 className="font-display text-lg text-[var(--color-text)]">CAMPAIGN DOCUMENTS</h2>
+        </div>
+        <p className="text-xs text-[var(--color-muted)] mb-4">
+          Upload campaign materials to generate AI-powered SMS scripts and response branches.
+        </p>
+        <CampaignDocuments
+          campaignId={id}
+          initialDocuments={campaignDocuments ?? []}
+        />
       </div>
 
       {/* Script Section */}

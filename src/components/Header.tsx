@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { Menu } from 'lucide-react'
 import { useTheme } from '@/components/ThemeProvider'
 import { ThemeToggle } from '@/components/ThemeToggle'
+import AuthButton from '@/components/AuthButton'
 
 interface HeaderProps {
   onAskMeClick: () => void
@@ -62,6 +63,7 @@ export default function Header({ onAskMeClick, onMenuClick }: HeaderProps) {
           >
             Ask Me
           </button>
+          <AuthButton />
           <ThemeToggle />
         </nav>
 

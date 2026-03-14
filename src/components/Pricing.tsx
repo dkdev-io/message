@@ -77,7 +77,7 @@ export default function Pricing() {
       <div className="text-center mt-12">
         <Link
           href="/calculator"
-          className="border-2 border-[var(--color-accent)] text-[var(--color-accent)] rounded-full px-6 py-3 hover:bg-[var(--color-accent)] hover:text-white transition inline-block"
+          className="bg-[var(--color-accent)] hover:bg-[var(--color-accent-hover)] text-white rounded-full px-6 py-3 font-bold transition inline-block"
         >
           Not Sure Which Plan? Use Our Calculator
         </Link>

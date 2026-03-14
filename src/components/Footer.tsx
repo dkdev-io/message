@@ -75,26 +75,28 @@ export default function Footer() {
   }
 
   return (
-    <footer className="bg-[var(--color-surface)] border-t border-[var(--color-muted)]/20 py-16">
+    <footer className="bg-[var(--color-surface)] border-t border-[var(--color-muted)]/20 py-6">
       <div className="max-w-[1200px] mx-auto px-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+        <div className="max-w-2xl mx-auto">
           {columns.map((col, i) => (
-            <div key={col.title}>
-              {/* Mobile accordion header */}
+            <div key={col.title} className="border-b border-[var(--color-muted)]/10 last:border-b-0">
               <button
-                className="flex w-full items-center justify-between md:pointer-events-none"
+                className="flex w-full items-center justify-center gap-2 py-3"
                 onClick={() => toggleSection(i)}
               >
-                <h4 className="font-display text-[var(--color-text)]">{col.title}</h4>
+                <h4 className="font-display text-sm text-[var(--color-text)]">{col.title}</h4>
                 <ChevronDown
-                  className={`h-4 w-4 text-[var(--color-muted)] transition-transform md:hidden ${
+                  className={`h-3 w-3 text-[var(--color-muted)] transition-transform ${
                     openSections[i] ? 'rotate-180' : ''
                   }`}
                 />
               </button>
 
-              {/* Content: hidden on mobile unless open, always visible on md+ */}
-              <div className={`mt-3 ${openSections[i] ? 'block' : 'hidden'} md:block`}>
+              <div
+                className={`overflow-hidden transition-all duration-200 text-center ${
+                  openSections[i] ? 'max-h-40 pb-3' : 'max-h-0'
+                }`}
+              >
                 {col.content}
               </div>
             </div>
@@ -102,11 +104,11 @@ export default function Footer() {
         </div>
 
         {/* Bottom bar */}
-        <div className="mt-12 pt-8 border-t border-[var(--color-muted)]/20 flex justify-between items-center">
-          <p className="text-[var(--color-muted)] text-sm">
+        <div className="mt-4 pt-4 border-t border-[var(--color-muted)]/20 flex flex-col items-center gap-2">
+          <ThemeToggle />
+          <p className="text-[var(--color-muted)] text-xs">
             &copy; 2026 Dev/D. All rights reserved.
           </p>
-          <ThemeToggle />
         </div>
       </div>
     </footer>

@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { Menu } from 'lucide-react'
 import { useTheme } from '@/components/ThemeProvider'
 import { ThemeToggle } from '@/components/ThemeToggle'
+// eslint-disable-next-line @typescript-eslint/no-unused-vars -- Used in JSX below, do not remove
 import AuthButton from '@/components/AuthButton'
 
 interface HeaderProps {

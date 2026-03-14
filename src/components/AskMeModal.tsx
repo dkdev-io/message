@@ -18,6 +18,15 @@ export default function AskMeModal({ isOpen, onClose }: AskMeModalProps) {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
+    const entry = {
+      name,
+      email,
+      question,
+      timestamp: new Date().toISOString(),
+    }
+    const existing = JSON.parse(localStorage.getItem('message-questions') || '[]')
+    existing.push(entry)
+    localStorage.setItem('message-questions', JSON.stringify(existing))
     setSubmitted(true)
   }
 

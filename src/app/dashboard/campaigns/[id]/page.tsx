@@ -2,7 +2,8 @@ import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { ArrowLeft, Pencil, Trash2, Play, Pause, CheckCircle, FileText, Users, MessageSquare } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
-import { updateCampaignStatus, deleteCampaign } from '@/lib/actions/campaigns'
+import { updateCampaignStatus } from '@/lib/actions/campaigns'
+import DeleteCampaignButton from '@/components/dashboard/DeleteCampaignButton'
 import ScriptEditor from '@/components/dashboard/ScriptEditor'
 import VoterUpload from '@/components/dashboard/VoterUpload'
 
@@ -61,7 +62,7 @@ export default async function CampaignDetailPage({
   const activateAction = updateCampaignStatus.bind(null, id, 'active')
   const pauseAction = updateCampaignStatus.bind(null, id, 'paused')
   const completeAction = updateCampaignStatus.bind(null, id, 'completed')
-  const deleteAction = deleteCampaign.bind(null, id)
+  // deleteAction removed — handled by DeleteCampaignButton client component
 
   return (
     <div className="max-w-4xl mx-auto space-y-8">
@@ -96,20 +97,7 @@ export default async function CampaignDetailPage({
               <Pencil size={14} />
               Edit
             </Link>
-            <form action={deleteAction}>
-              <button
-                type="submit"
-                className="inline-flex items-center gap-2 text-red-500 hover:text-red-400 border border-red-500/30 hover:border-red-500/50 rounded-lg px-3 py-2 text-sm transition-colors"
-                onClick={(e) => {
-                  if (!confirm('Are you sure you want to delete this campaign? This cannot be undone.')) {
-                    e.preventDefault()
-                  }
-                }}
-              >
-                <Trash2 size={14} />
-                Delete
-              </button>
-            </form>
+            <DeleteCampaignButton campaignId={id} />
           </div>
         </div>
       </div>

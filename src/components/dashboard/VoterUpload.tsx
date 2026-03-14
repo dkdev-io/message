@@ -74,8 +74,14 @@ export default function VoterUpload({ campaignId }: VoterUploadProps) {
       setProgress(100)
       setResult({
         type: 'success',
-        message: `Successfully imported ${data.summary.imported} voters.`,
-        summary: data.summary,
+        message: `Successfully imported ${data.inserted} voters.`,
+        summary: {
+          total_rows: data.total,
+          imported: data.inserted,
+          duplicates: data.duplicates,
+          invalid_phones: data.invalidPhones,
+          opt_outs: data.optedOut,
+        },
       })
       setFile(null)
       if (inputRef.current) inputRef.current.value = ''

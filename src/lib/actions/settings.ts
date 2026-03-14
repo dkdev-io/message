@@ -41,3 +41,20 @@ export async function saveTwilioSettings(formData: FormData) {
 
   revalidatePath('/dashboard/settings')
 }
+
+export async function testTwilioCredentials(accountSid: string, authToken: string) {
+  const response = await fetch(
+    `https://api.twilio.com/2010-04-01/Accounts/${accountSid}.json`,
+    {
+      headers: {
+        Authorization: 'Basic ' + Buffer.from(`${accountSid}:${authToken}`).toString('base64'),
+      },
+    }
+  )
+
+  if (!response.ok) {
+    return { valid: false, error: 'Invalid Twilio credentials. Please check your Account SID and Auth Token.' }
+  }
+
+  return { valid: true }
+}

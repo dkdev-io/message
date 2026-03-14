@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useTransition } from 'react'
-import { saveTwilioSettings } from '@/lib/actions/settings'
+import { saveTwilioSettings, testTwilioCredentials } from '@/lib/actions/settings'
 import { Loader2, CheckCircle, AlertCircle, FlaskConical } from 'lucide-react'
 
 interface SettingsFormProps {
@@ -44,22 +44,14 @@ export default function SettingsForm({ initialSettings }: SettingsFormProps) {
     setIsTesting(true)
 
     try {
-      const res = await fetch(
-        `https://api.twilio.com/2010-04-01/Accounts/${sid}.json`,
-        {
-          headers: {
-            Authorization: 'Basic ' + btoa(`${sid}:${token}`),
-          },
-        }
-      )
-
-      if (res.ok) {
+      const result = await testTwilioCredentials(sid, token)
+      if (result.valid) {
         setMessage({ type: 'success', text: 'Twilio credentials are valid!' })
       } else {
-        setMessage({ type: 'error', text: 'Invalid Twilio credentials. Please check your Account SID and Auth Token.' })
+        setMessage({ type: 'error', text: result.error || 'Invalid Twilio credentials.' })
       }
     } catch {
-      setMessage({ type: 'error', text: 'Could not reach Twilio. Check your network connection.' })
+      setMessage({ type: 'error', text: 'Failed to test credentials. Please try again.' })
     } finally {
       setIsTesting(false)
     }

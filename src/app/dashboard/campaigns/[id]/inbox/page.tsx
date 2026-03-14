@@ -35,6 +35,14 @@ export default async function InboxPage({ params }: InboxPageProps) {
     .eq('campaign_id', campaignId)
     .order('created_at', { ascending: true })
 
+  // Load response branches for this campaign
+  const { data: branches } = await supabase
+    .from('response_branches')
+    .select('id, label, keywords, response_body')
+    .eq('campaign_id', campaignId)
+    .eq('is_active', true)
+    .order('sort_order', { ascending: true })
+
   return (
     <div className="-m-6 flex flex-col h-[calc(100vh-4rem)]">
       <div className="px-6 py-4 border-b border-[var(--color-muted)]/20">
@@ -47,6 +55,7 @@ export default async function InboxPage({ params }: InboxPageProps) {
           campaignId={campaignId}
           initialMessages={messages || []}
           voters={voters || []}
+          branches={branches || []}
         />
       </div>
     </div>

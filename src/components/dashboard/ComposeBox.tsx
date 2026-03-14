@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useTransition } from 'react'
+import { useState, useTransition, useEffect } from 'react'
 import { sendMessage } from '@/lib/actions/messages'
 import { Send, Loader2 } from 'lucide-react'
 
@@ -10,10 +10,19 @@ interface ComposeBoxProps {
   campaignId: string
   voterId: string
   onSent: () => void
+  prefillBody?: string | null
+  onPrefillConsumed?: () => void
 }
 
-export default function ComposeBox({ campaignId, voterId, onSent }: ComposeBoxProps) {
+export default function ComposeBox({ campaignId, voterId, onSent, prefillBody, onPrefillConsumed }: ComposeBoxProps) {
   const [body, setBody] = useState('')
+
+  useEffect(() => {
+    if (prefillBody) {
+      setBody(prefillBody)
+      onPrefillConsumed?.()
+    }
+  }, [prefillBody, onPrefillConsumed])
   const [isPending, startTransition] = useTransition()
   const [error, setError] = useState<string | null>(null)
 

@@ -1,10 +1,11 @@
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
-import { ArrowLeft, Pencil, Trash2, Play, Pause, CheckCircle, FileText, Users, MessageSquare } from 'lucide-react'
+import { ArrowLeft, Pencil, Trash2, Play, Pause, CheckCircle, FileText, Users, MessageSquare, GitBranch } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
 import { updateCampaignStatus } from '@/lib/actions/campaigns'
 import DeleteCampaignButton from '@/components/dashboard/DeleteCampaignButton'
 import ScriptEditor from '@/components/dashboard/ScriptEditor'
+import ResponseBranches from '@/components/dashboard/ResponseBranches'
 import VoterUpload from '@/components/dashboard/VoterUpload'
 
 export default async function CampaignDetailPage({
@@ -37,6 +38,14 @@ export default async function CampaignDetailPage({
     body,
     created_at,
   }))
+
+  // Load response branches
+  const { data: responseBranches } = await supabase
+    .from('response_branches')
+    .select('*')
+    .eq('campaign_id', id)
+    .eq('is_active', true)
+    .order('sort_order', { ascending: true })
 
   // Load first 20 voters
   const { data: voters } = await supabase
@@ -171,6 +180,21 @@ export default async function CampaignDetailPage({
           campaignId={id}
           initialScript={activeScript?.body ?? ''}
           versions={versions}
+        />
+      </div>
+
+      {/* Response Branches Section */}
+      <div className="bg-[var(--color-surface)] rounded-xl border border-[var(--color-muted)]/20 p-6">
+        <div className="flex items-center gap-2 mb-4">
+          <GitBranch size={18} className="text-[var(--color-accent)]" />
+          <h2 className="font-display text-lg text-[var(--color-text)]">RESPONSE BRANCHES</h2>
+        </div>
+        <p className="text-xs text-[var(--color-muted)] mb-4">
+          Define suggested responses for volunteers based on voter reply keywords.
+        </p>
+        <ResponseBranches
+          campaignId={id}
+          initialBranches={responseBranches ?? []}
         />
       </div>
 

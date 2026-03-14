@@ -1,11 +1,12 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import ConversationList from './ConversationList'
 import ChatThread from './ChatThread'
 import ComposeBox from './ComposeBox'
-import { MessageSquare } from 'lucide-react'
+import { MessageSquare, GitBranch } from 'lucide-react'
+import { matchBranch, type Branch, type BranchMatch } from '@/lib/services/branch-matcher'
 
 interface Message {
   id: string
@@ -32,14 +33,44 @@ interface InboxViewProps {
   campaignId: string
   initialMessages: Message[]
   voters: Voter[]
+  branches?: Branch[]
 }
 
-export default function InboxView({ campaignId, initialMessages, voters }: InboxViewProps) {
+export default function InboxView({ campaignId, initialMessages, voters, branches = [] }: InboxViewProps) {
   const [messages, setMessages] = useState<Message[]>(initialMessages)
   const [selectedVoterId, setSelectedVoterId] = useState<string | null>(null)
+  const [suggestedResponse, setSuggestedResponse] = useState<BranchMatch | null>(null)
+  const [prefillBody, setPrefillBody] = useState<string | null>(null)
 
   const selectedVoter = voters.find((v) => v.id === selectedVoterId)
   const selectedMessages = messages.filter((m) => m.voter_id === selectedVoterId)
+
+  // Match the latest inbound message from the selected voter against branches
+  const latestInbound = useMemo(() => {
+    if (!selectedVoterId) return null
+    const inboundMsgs = selectedMessages.filter((m) => m.direction === 'inbound')
+    return inboundMsgs.length > 0 ? inboundMsgs[inboundMsgs.length - 1] : null
+  }, [selectedVoterId, selectedMessages])
+
+  useEffect(() => {
+    if (latestInbound && branches.length > 0) {
+      const match = matchBranch(latestInbound.body, branches)
+      setSuggestedResponse(match)
+    } else {
+      setSuggestedResponse(null)
+    }
+  }, [latestInbound, branches])
+
+  function handleUseSuggestion() {
+    if (suggestedResponse) {
+      setPrefillBody(suggestedResponse.response_body)
+      setSuggestedResponse(null)
+    }
+  }
+
+  function handlePrefillConsumed() {
+    setPrefillBody(null)
+  }
 
   // Subscribe to real-time messages
   useEffect(() => {
@@ -120,11 +151,31 @@ export default function InboxView({ campaignId, initialMessages, voters }: Inbox
               voterName={`${selectedVoter.first_name} ${selectedVoter.last_name}`}
             />
 
+            {/* Branch suggestion banner */}
+            {suggestedResponse && (
+              <div className="px-4 py-2 bg-[var(--color-accent)]/10 border-t border-[var(--color-accent)]/20 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <GitBranch size={14} className="text-[var(--color-accent)]" />
+                  <span className="text-xs text-[var(--color-text)]">
+                    Suggested: <span className="font-display">{suggestedResponse.label}</span>
+                  </span>
+                </div>
+                <button
+                  onClick={handleUseSuggestion}
+                  className="text-xs font-display bg-[var(--color-accent)] hover:bg-[var(--color-accent-hover)] text-white rounded-lg px-3 py-1 transition-colors"
+                >
+                  USE RESPONSE
+                </button>
+              </div>
+            )}
+
             {/* Compose */}
             <ComposeBox
               campaignId={campaignId}
               voterId={selectedVoterId!}
               onSent={handleSent}
+              prefillBody={prefillBody}
+              onPrefillConsumed={handlePrefillConsumed}
             />
           </>
         ) : (

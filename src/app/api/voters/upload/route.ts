@@ -50,14 +50,33 @@ export async function POST(request: Request) {
     const sheetName = workbook.SheetNames[0]
     const rows = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName]) as Array<Record<string, unknown>>
 
-    // Normalize column names to snake_case
+    // Normalize column names to snake_case, then map common aliases
+    const columnAliases: Record<string, string> = {
+      phone_number: 'phone',
+      phonenumber: 'phone',
+      cell: 'phone',
+      cell_phone: 'phone',
+      mobile: 'phone',
+      mobile_phone: 'phone',
+      telephone: 'phone',
+      tel: 'phone',
+      firstname: 'first_name',
+      fname: 'first_name',
+      lastname: 'last_name',
+      lname: 'last_name',
+    }
+
     const normalizedRows = rows.map((row) => {
       const normalized: Record<string, unknown> = {}
       for (const [key, value] of Object.entries(row)) {
-        const normalizedKey = key
+        let normalizedKey = key
           .toLowerCase()
           .replace(/\s+/g, '_')
           .replace(/[^a-z0-9_]/g, '')
+        // Apply alias mapping
+        if (columnAliases[normalizedKey]) {
+          normalizedKey = columnAliases[normalizedKey]
+        }
         normalized[normalizedKey] = value
       }
       return normalized

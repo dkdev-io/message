@@ -54,7 +54,12 @@ async function classifyPhoneTypes(
 }
 
 function normalizePhone(phone: string): string | null {
-  const digits = phone.replace(/\D/g, '')
+  // Handle Excel numeric values (may come as number strings like "6.5155E+09")
+  let cleaned = phone
+  if (cleaned.includes('E+') || cleaned.includes('e+')) {
+    try { cleaned = BigInt(Math.round(Number(cleaned))).toString() } catch { /* ignore */ }
+  }
+  const digits = cleaned.replace(/\D/g, '')
   if (digits.length === 10) return `+1${digits}`
   if (digits.length === 11 && digits.startsWith('1')) return `+${digits}`
   return null

@@ -25,7 +25,7 @@ export default async function CampaignDetailPage({
   // Load campaign with voter and message counts + owner's Twilio creds
   const { data: campaign } = await supabase
     .from('campaigns')
-    .select('*, voters(count), messages(count), profiles!inner(twilio_account_sid, twilio_auth_token)')
+    .select('*, voters(count), messages(count), profiles(twilio_account_sid, twilio_auth_token)')
     .eq('id', id)
     .single()
 

@@ -21,11 +21,12 @@ export default async function InboxPage({ params }: InboxPageProps) {
 
   if (!campaign) redirect('/dashboard')
 
-  // Load voters for this campaign with their latest message
+  // Load voters for this campaign — only mobile and voip (eligible for SMS)
   const { data: voters } = await supabase
     .from('voters')
     .select('id, first_name, last_name, phone')
     .eq('campaign_id', campaignId)
+    .in('phone_type', ['mobile', 'voip'])
     .order('last_name', { ascending: true })
 
   // Load all messages for this campaign

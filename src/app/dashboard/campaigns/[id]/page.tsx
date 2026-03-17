@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
-import { ArrowLeft, Pencil, Trash2, Play, Pause, CheckCircle, FileText, Users, MessageSquare, GitBranch, FolderOpen } from 'lucide-react'
+import { ArrowLeft, Pencil, Trash2, Play, Pause, CheckCircle, FileText, Users, MessageSquare, GitBranch, FolderOpen, Rocket, Send, Shield } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
 import { updateCampaignStatus } from '@/lib/actions/campaigns'
 import DeleteCampaignButton from '@/components/dashboard/DeleteCampaignButton'
@@ -8,6 +8,11 @@ import CampaignDocuments from '@/components/dashboard/CampaignDocuments'
 import ScriptEditor from '@/components/dashboard/ScriptEditor'
 import ResponseBranches from '@/components/dashboard/ResponseBranches'
 import VoterUpload from '@/components/dashboard/VoterUpload'
+import VoterAnalysis from '@/components/dashboard/VoterAnalysis'
+import CampaignLauncher from '@/components/dashboard/CampaignLauncher'
+import QuickSend from '@/components/dashboard/QuickSend'
+import ScriptPdfExport from '@/components/dashboard/ScriptPdfExport'
+import TenDlcSetup from '@/components/dashboard/TenDlcSetup'
 
 export default async function CampaignDetailPage({
   params,
@@ -17,14 +22,20 @@ export default async function CampaignDetailPage({
   const { id } = await params
   const supabase = await createClient()
 
-  // Load campaign with voter and message counts
+  // Load campaign with voter and message counts + owner's Twilio creds
   const { data: campaign } = await supabase
     .from('campaigns')
-    .select('*, voters(count), messages(count)')
+    .select('*, voters(count), messages(count), profiles!inner(twilio_account_sid, twilio_auth_token)')
     .eq('id', id)
     .single()
 
   if (!campaign) notFound()
+
+  const ownerProfile = Array.isArray(campaign.profiles) ? campaign.profiles[0] : campaign.profiles
+  const hasTwilioCreds = !!(
+    (ownerProfile?.twilio_account_sid && ownerProfile?.twilio_auth_token) ||
+    (process.env.TWILIO_ACCOUNT_SID && process.env.TWILIO_AUTH_TOKEN)
+  )
 
   // Load active script and all versions
   const { data: scriptVersions } = await supabase
@@ -55,16 +66,38 @@ export default async function CampaignDetailPage({
     .eq('campaign_id', id)
     .order('created_at', { ascending: false })
 
-  // Load first 20 voters
+  // Load first 20 voters with phone_type
   const { data: voters } = await supabase
     .from('voters')
-    .select('id, first_name, last_name, phone, state')
+    .select('id, first_name, last_name, phone, state, phone_type')
     .eq('campaign_id', id)
     .order('created_at', { ascending: false })
     .limit(20)
 
+  // Get phone type counts for voter analysis
+  const { data: allVoterTypes } = await supabase
+    .from('voters')
+    .select('phone_type')
+    .eq('campaign_id', id)
+
+  const phoneTypeCounts = {
+    mobile: 0,
+    landline: 0,
+    voip: 0,
+    unknown: 0,
+    total: 0,
+  }
+  if (allVoterTypes) {
+    phoneTypeCounts.total = allVoterTypes.length
+    for (const v of allVoterTypes) {
+      const pt = v.phone_type as keyof typeof phoneTypeCounts
+      if (pt in phoneTypeCounts && pt !== 'total') phoneTypeCounts[pt]++
+    }
+  }
+
   const voterCount = campaign.voters?.[0]?.count ?? 0
   const messageCount = campaign.messages?.[0]?.count ?? 0
+  const eligibleCount = phoneTypeCounts.mobile + phoneTypeCounts.voip
 
   const statusBadgeClass =
     campaign.status === 'active'
@@ -119,6 +152,22 @@ export default async function CampaignDetailPage({
         </div>
       </div>
 
+      {/* 10DLC Compliance Registration */}
+      <div className="bg-[var(--color-surface)] rounded-xl border border-[var(--color-muted)]/20 p-6">
+        <div className="flex items-center gap-2 mb-4">
+          <Shield size={18} className="text-[var(--color-accent)]" />
+          <h2 className="font-display text-lg text-[var(--color-text)]">10DLC COMPLIANCE</h2>
+        </div>
+        <TenDlcSetup
+          campaignId={id}
+          campaignName={campaign.name}
+          tenDlcStatus={(campaign as Record<string, unknown>).ten_dlc_status as string | null}
+          brandSid={(campaign as Record<string, unknown>).ten_dlc_brand_sid as string | null}
+          campaignSid={(campaign as Record<string, unknown>).ten_dlc_campaign_sid as string | null}
+          hasTwilioCreds={hasTwilioCreds}
+        />
+      </div>
+
       {/* Status Controls */}
       <div className="bg-[var(--color-surface)] rounded-xl border border-[var(--color-muted)]/20 p-6">
         <h2 className="font-display text-lg text-[var(--color-text)] mb-4">STATUS CONTROLS</h2>
@@ -159,6 +208,20 @@ export default async function CampaignDetailPage({
         </div>
       </div>
 
+      {/* Campaign Launch */}
+      <div className="bg-[var(--color-surface)] rounded-xl border border-[var(--color-muted)]/20 p-6">
+        <div className="flex items-center gap-2 mb-4">
+          <Rocket size={18} className="text-[var(--color-accent)]" />
+          <h2 className="font-display text-lg text-[var(--color-text)]">LAUNCH CAMPAIGN</h2>
+        </div>
+        <CampaignLauncher
+          campaignId={id}
+          eligibleCount={eligibleCount}
+          activeScriptPreview={activeScript?.body ?? null}
+          campaignStatus={campaign.status}
+        />
+      </div>
+
       {/* Stats Row */}
       <div className="grid grid-cols-3 gap-4">
         <div className="bg-[var(--color-surface)] rounded-xl border border-[var(--color-muted)]/20 p-6 text-center">
@@ -195,9 +258,22 @@ export default async function CampaignDetailPage({
 
       {/* Script Section */}
       <div className="bg-[var(--color-surface)] rounded-xl border border-[var(--color-muted)]/20 p-6">
-        <div className="flex items-center gap-2 mb-4">
-          <FileText size={18} className="text-[var(--color-accent)]" />
-          <h2 className="font-display text-lg text-[var(--color-text)]">SMS SCRIPT</h2>
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-2">
+            <FileText size={18} className="text-[var(--color-accent)]" />
+            <h2 className="font-display text-lg text-[var(--color-text)]">SMS SCRIPT</h2>
+          </div>
+          <ScriptPdfExport
+            campaignName={campaign.name}
+            campaignDescription={campaign.description}
+            activeScript={activeScript?.body ?? null}
+            branches={(responseBranches ?? []).map((b) => ({
+              id: b.id,
+              label: b.label,
+              keywords: b.keywords,
+              response_body: b.response_body,
+            }))}
+          />
         </div>
         <ScriptEditor
           campaignId={id}
@@ -232,6 +308,13 @@ export default async function CampaignDetailPage({
 
         <VoterUpload campaignId={id} />
 
+        {/* Voter Phone Type Analysis */}
+        {phoneTypeCounts.total > 0 && (
+          <div className="mt-6">
+            <VoterAnalysis counts={phoneTypeCounts} />
+          </div>
+        )}
+
         {voters && voters.length > 0 && (
           <div className="mt-6 overflow-x-auto">
             <table className="w-full text-sm">
@@ -239,6 +322,7 @@ export default async function CampaignDetailPage({
                 <tr className="border-b border-[var(--color-muted)]/20">
                   <th className="text-left py-2 px-3 text-xs font-medium text-[var(--color-muted)] uppercase">Name</th>
                   <th className="text-left py-2 px-3 text-xs font-medium text-[var(--color-muted)] uppercase">Phone</th>
+                  <th className="text-left py-2 px-3 text-xs font-medium text-[var(--color-muted)] uppercase">Type</th>
                   <th className="text-left py-2 px-3 text-xs font-medium text-[var(--color-muted)] uppercase">State</th>
                 </tr>
               </thead>
@@ -249,6 +333,16 @@ export default async function CampaignDetailPage({
                       {voter.first_name} {voter.last_name}
                     </td>
                     <td className="py-2.5 px-3 text-[var(--color-muted)]">{voter.phone}</td>
+                    <td className="py-2.5 px-3">
+                      <span className={`text-xs px-2 py-0.5 rounded-full ${
+                        voter.phone_type === 'mobile' ? 'bg-green-500/10 text-green-500' :
+                        voter.phone_type === 'voip' ? 'bg-blue-500/10 text-blue-500' :
+                        voter.phone_type === 'landline' ? 'bg-red-500/10 text-red-500' :
+                        'bg-gray-500/10 text-gray-500'
+                      }`}>
+                        {voter.phone_type || 'unknown'}
+                      </span>
+                    </td>
                     <td className="py-2.5 px-3 text-[var(--color-muted)]">{voter.state ?? '-'}</td>
                   </tr>
                 ))}
@@ -261,6 +355,18 @@ export default async function CampaignDetailPage({
             )}
           </div>
         )}
+      </div>
+
+      {/* Quick Send */}
+      <div className="bg-[var(--color-surface)] rounded-xl border border-[var(--color-muted)]/20 p-6">
+        <div className="flex items-center gap-2 mb-4">
+          <Send size={18} className="text-[var(--color-accent)]" />
+          <h2 className="font-display text-lg text-[var(--color-text)]">QUICK SEND</h2>
+        </div>
+        <p className="text-xs text-[var(--color-muted)] mb-4">
+          Send an SMS to individual phone numbers or email campaign info directly.
+        </p>
+        <QuickSend campaignId={id} activeScript={activeScript?.body ?? null} />
       </div>
 
       {/* Messages Section */}

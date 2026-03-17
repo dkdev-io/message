@@ -1,5 +1,6 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { hashPhone } from './compliance'
+import { lookupPhoneType } from './twilio'
 
 interface UploadResult {
   total: number
@@ -8,6 +9,7 @@ interface UploadResult {
   invalidPhones: number
   optedOut: number
   errors: string[]
+  phoneTypes?: { mobile: number; landline: number; voip: number; unknown: number }
 }
 
 interface VoterRow {
@@ -21,6 +23,36 @@ interface VoterRow {
   [key: string]: unknown
 }
 
+async function classifyPhoneTypes(
+  campaignId: string,
+  credentials: { accountSid: string; authToken: string },
+  supabase: SupabaseClient
+) {
+  const { data: unclassifiedVoters } = await supabase
+    .from('voters')
+    .select('id, phone')
+    .eq('campaign_id', campaignId)
+    .eq('phone_type', 'unknown')
+
+  if (!unclassifiedVoters) return
+
+  for (const voter of unclassifiedVoters) {
+    try {
+      const phoneType = await lookupPhoneType(
+        voter.phone,
+        credentials.accountSid,
+        credentials.authToken
+      )
+      await supabase
+        .from('voters')
+        .update({ phone_type: phoneType })
+        .eq('id', voter.id)
+    } catch {
+      // Leave as unknown on failure
+    }
+  }
+}
+
 function normalizePhone(phone: string): string | null {
   const digits = phone.replace(/\D/g, '')
   if (digits.length === 10) return `+1${digits}`
@@ -31,7 +63,8 @@ function normalizePhone(phone: string): string | null {
 export async function processVoterUpload(
   rows: VoterRow[],
   campaignId: string,
-  supabase: SupabaseClient
+  supabase: SupabaseClient,
+  twilioCredentials?: { accountSid: string; authToken: string }
 ): Promise<UploadResult> {
   const result: UploadResult = {
     total: rows.length,
@@ -126,6 +159,13 @@ export async function processVoterUpload(
     }
 
     result.duplicates += votersToInsert.length - result.inserted
+  }
+
+  // Classify phone types via Twilio Lookup API in the background (non-blocking)
+  if (twilioCredentials && result.inserted > 0) {
+    classifyPhoneTypes(campaignId, twilioCredentials, supabase).catch((err) => {
+      console.error('Background phone classification failed:', err)
+    })
   }
 
   return result

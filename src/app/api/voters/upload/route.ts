@@ -31,6 +31,19 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Campaign not found' }, { status: 404 })
   }
 
+  // Fetch Twilio credentials for phone type lookup
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('twilio_account_sid, twilio_auth_token')
+    .eq('id', user.id)
+    .single()
+
+  const accountSid = profile?.twilio_account_sid || process.env.TWILIO_ACCOUNT_SID
+  const authToken = profile?.twilio_auth_token || process.env.TWILIO_AUTH_TOKEN
+  const twilioCredentials = accountSid && authToken
+    ? { accountSid, authToken }
+    : undefined
+
   try {
     const buffer = await file.arrayBuffer()
     const workbook = XLSX.read(buffer, { type: 'array' })
@@ -50,7 +63,7 @@ export async function POST(request: Request) {
       return normalized
     })
 
-    const result = await processVoterUpload(normalizedRows as { phone: string; [key: string]: unknown }[], campaignId, supabase)
+    const result = await processVoterUpload(normalizedRows as { phone: string; [key: string]: unknown }[], campaignId, supabase, twilioCredentials)
     return NextResponse.json(result)
   } catch (error) {
     return NextResponse.json(

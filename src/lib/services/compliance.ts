@@ -14,8 +14,14 @@ export function hashPhone(phone: string): string {
 export async function checkCompliance(
   phone: string,
   state: string | null,
-  supabase: SupabaseClient
+  supabase: SupabaseClient,
+  phoneType?: string | null
 ): Promise<ComplianceResult> {
+  // Block landline numbers from SMS
+  if (phoneType === 'landline') {
+    return { allowed: false, reason: 'Cannot send SMS to landline numbers.' }
+  }
+
   // Check global opt-out
   const phoneHash = hashPhone(phone)
   const { data: optOut } = await supabase

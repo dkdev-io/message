@@ -31,9 +31,12 @@ export default function Features() {
   return (
     <section id="features" className="py-20 md:py-28">
       <div className="max-w-[1200px] mx-auto px-6">
-        <h2 className="font-display text-3xl md:text-5xl text-center mb-12">
+        <h2 className="font-display text-3xl md:text-5xl text-center mb-4">
           MESSAGE DOES MORE
         </h2>
+        <p className="text-[var(--color-muted)] text-center max-w-2xl mx-auto mb-12">
+          Messaging apps have fallen behind. We use the latest tech to help campaigns do more.
+        </p>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           {features.map((feature) => (

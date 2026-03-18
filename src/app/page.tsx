@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import Header from "@/components/Header";
+import LandingHeader from "@/components/LandingHeader";
 import MobileNav from "@/components/MobileNav";
 import Hero from "@/components/Hero";
 import Features from "@/components/Features";
@@ -9,6 +9,7 @@ import Pricing from "@/components/Pricing";
 import ComingSoon from "@/components/ComingSoon";
 import Footer from "@/components/Footer";
 import AskMeModal from "@/components/AskMeModal";
+import ConsentBanner from "@/components/ConsentBanner";
 
 export default function Home() {
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
@@ -34,7 +35,7 @@ export default function Home() {
 
   return (
     <>
-      <Header
+      <LandingHeader
         onMenuClick={() => setMobileNavOpen(true)}
         onAskMeClick={() => setAskMeOpen(true)}
       />
@@ -56,6 +57,7 @@ export default function Home() {
       </main>
 
       <Footer />
+      <ConsentBanner />
     </>
   );
 }

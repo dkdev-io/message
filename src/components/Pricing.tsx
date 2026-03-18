@@ -35,15 +35,18 @@ const plans = [
 export default function Pricing() {
   return (
     <section id="pricing" className="py-20 md:py-28">
-      <h2 className="font-display text-3xl md:text-5xl text-center mb-16">
-        MESSAGE DOES MORE FOR LESS
+      <h2 className="font-display text-3xl md:text-5xl text-center mb-4">
+        MESSAGE COSTS LESS
       </h2>
+      <p className="text-[var(--color-muted)] text-center max-w-2xl mx-auto mb-16">
+        Message is one tool in an integrated suite of voter contact tools. Lean team, no overhead, and more user friendly tech to help campaigns reach their SMS goals for less.
+      </p>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-[1200px] mx-auto px-6">
         {plans.map((plan) => (
           <div
             key={plan.title}
-            className={`fade-up ${plan.stagger} bg-[var(--color-surface)] rounded-xl p-8 border border-[var(--color-muted)]/20 text-center hover:translate-y-[-4px] hover:shadow-lg transition ${
+            className={`fade-up ${plan.stagger} bg-[var(--color-surface)] rounded-xl p-8 border border-[var(--color-muted)]/20 text-center hover:translate-y-[-4px] hover:shadow-lg transition flex flex-col ${
               plan.highlighted ? 'ring-2 ring-[var(--color-accent)] md:scale-105' : ''
             }`}
           >
@@ -62,7 +65,7 @@ export default function Pricing() {
               )}
             </div>
 
-            <p className="text-[var(--color-muted)]">{plan.description}</p>
+            <p className="text-[var(--color-muted)] flex-1">{plan.description}</p>
 
             <Link
               href={plan.cta}

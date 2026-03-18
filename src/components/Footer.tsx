@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import Link from 'next/link'
 import { ChevronDown } from 'lucide-react'
 import { ThemeToggle } from '@/components/ThemeToggle'
 
@@ -85,7 +86,7 @@ export default function Footer() {
   return (
     <footer className="bg-[var(--color-surface)] border-t border-[var(--color-muted)]/20 py-4">
       <div className="max-w-[1200px] mx-auto px-6">
-        <h3 className="font-display text-lg text-[var(--color-text)] text-center mb-2">LEARN MORE</h3>
+        <h3 className="font-display text-3xl md:text-5xl text-[var(--color-text)] text-center mb-4">LEARN MORE</h3>
         <div className="grid grid-cols-2 md:grid-cols-5 gap-x-6 gap-y-0">
           {columns.map((col, i) => (
             <div key={col.title} className="text-center">
@@ -117,6 +118,9 @@ export default function Footer() {
           <p className="text-[var(--color-muted)] text-xs">
             Website by Dev/D.
           </p>
+          <Link href="/privacy" className="text-[var(--color-muted)] hover:text-[var(--color-accent)] transition text-xs">
+            Privacy Policy
+          </Link>
           <ThemeToggle />
         </div>
       </div>

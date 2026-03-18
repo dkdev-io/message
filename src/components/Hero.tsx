@@ -10,7 +10,7 @@ export default function Hero() {
   return (
     <section
       id="about"
-      className="py-16 md:py-24 flex items-center justify-center"
+      className="py-12 md:py-16 flex items-center justify-center"
     >
       <div className="max-w-[1200px] mx-auto px-6 flex flex-col items-center text-center">
         <div className="animate-fade-up">

@@ -13,6 +13,7 @@ import CampaignLauncher from '@/components/dashboard/CampaignLauncher'
 import QuickSend from '@/components/dashboard/QuickSend'
 import ScriptPdfExport from '@/components/dashboard/ScriptPdfExport'
 import TenDlcSetup from '@/components/dashboard/TenDlcSetup'
+import CampaignAnalytics from '@/components/dashboard/CampaignAnalytics'
 
 export default async function CampaignDetailPage({
   params,
@@ -93,6 +94,53 @@ export default async function CampaignDetailPage({
       const pt = v.phone_type as keyof typeof phoneTypeCounts
       if (pt in phoneTypeCounts && pt !== 'total') phoneTypeCounts[pt]++
     }
+  }
+
+  // Analytics: message stats by status and direction
+  const { data: allMessages } = await supabase
+    .from('messages')
+    .select('direction, status, created_at')
+    .eq('campaign_id', id)
+
+  const analyticsStats = { sent: 0, delivered: 0, failed: 0, inbound: 0, optedOut: 0 }
+  const dailyMap = new Map<string, { outbound: number; inbound: number }>()
+
+  if (allMessages) {
+    for (const msg of allMessages) {
+      if (msg.direction === 'outbound') {
+        if (msg.status === 'delivered') analyticsStats.delivered++
+        else if (msg.status === 'failed') analyticsStats.failed++
+        else analyticsStats.sent++
+      } else {
+        analyticsStats.inbound++
+      }
+      // Daily volume
+      const date = msg.created_at.slice(0, 10)
+      const day = dailyMap.get(date) || { outbound: 0, inbound: 0 }
+      if (msg.direction === 'outbound') day.outbound++
+      else day.inbound++
+      dailyMap.set(date, day)
+    }
+  }
+
+  // Opted out voters
+  const { count: optOutCount } = await supabase
+    .from('voters')
+    .select('id', { count: 'exact', head: true })
+    .eq('campaign_id', id)
+    .eq('opted_out', true)
+
+  analyticsStats.optedOut = optOutCount ?? 0
+
+  // Build last 14 days for chart
+  const dailyVolume: Array<{ date: string; outbound: number; inbound: number }> = []
+  const now = new Date()
+  for (let i = 13; i >= 0; i--) {
+    const d = new Date(now)
+    d.setDate(d.getDate() - i)
+    const dateStr = d.toISOString().slice(0, 10)
+    const day = dailyMap.get(dateStr)
+    dailyVolume.push({ date: dateStr, outbound: day?.outbound ?? 0, inbound: day?.inbound ?? 0 })
   }
 
   const voterCount = campaign.voters?.[0]?.count ?? 0
@@ -239,6 +287,15 @@ export default async function CampaignDetailPage({
           <p className="font-display text-2xl text-[var(--color-text)]">{versions.length}</p>
           <p className="text-xs text-[var(--color-muted)]">Script Versions</p>
         </div>
+      </div>
+
+      {/* Campaign Analytics */}
+      <div className="bg-[var(--color-surface)] rounded-xl border border-[var(--color-muted)]/20 p-6">
+        <div className="flex items-center gap-2 mb-4">
+          <MessageSquare size={18} className="text-[var(--color-accent)]" />
+          <h2 className="font-display text-lg text-[var(--color-text)]">ANALYTICS</h2>
+        </div>
+        <CampaignAnalytics stats={analyticsStats} dailyVolume={dailyVolume} />
       </div>
 
       {/* Campaign Documents Section */}

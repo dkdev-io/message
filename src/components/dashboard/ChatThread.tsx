@@ -14,6 +14,18 @@ interface Message {
   created_at: string
   sent_at?: string | null
   error_message?: string | null
+  category?: string | null
+  sentiment?: string | null
+}
+
+const categoryStyles: Record<string, { bg: string; text: string }> = {
+  positive: { bg: 'bg-green-500/15', text: 'text-green-500' },
+  negative: { bg: 'bg-red-500/15', text: 'text-red-500' },
+  question: { bg: 'bg-blue-500/15', text: 'text-blue-500' },
+  scheduling: { bg: 'bg-yellow-500/15', text: 'text-yellow-500' },
+  opt_out: { bg: 'bg-red-500/15', text: 'text-red-500' },
+  wrong_number: { bg: 'bg-orange-500/15', text: 'text-orange-500' },
+  other: { bg: 'bg-gray-500/15', text: 'text-gray-400' },
 }
 
 interface ChatThreadProps {
@@ -56,6 +68,13 @@ export default function ChatThread({ messages, voterName }: ChatThreadProps) {
               }`}
             >
               <p className="text-sm whitespace-pre-wrap break-words">{msg.body}</p>
+              {!isOutbound && msg.category && (
+                <span className={`inline-block text-[10px] font-medium px-1.5 py-0.5 rounded mt-1 ${
+                  (categoryStyles[msg.category] || categoryStyles.other).bg
+                } ${(categoryStyles[msg.category] || categoryStyles.other).text}`}>
+                  {msg.category.replace('_', ' ')}
+                </span>
+              )}
               <div className={`flex items-center gap-1 mt-1 ${
                 isOutbound ? 'justify-end' : 'justify-start'
               }`}>

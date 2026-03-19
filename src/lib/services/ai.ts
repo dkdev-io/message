@@ -1,3 +1,51 @@
+interface CategorizeReplyResult {
+  category: 'positive' | 'negative' | 'question' | 'opt_out' | 'scheduling' | 'wrong_number' | 'other'
+  sentiment: 'positive' | 'negative' | 'neutral'
+  confidence: number
+}
+
+export async function categorizeReply(message: string): Promise<CategorizeReplyResult> {
+  const apiKey = process.env.ANTHROPIC_API_KEY
+  if (!apiKey) {
+    throw new Error('ANTHROPIC_API_KEY is not configured.')
+  }
+
+  const response = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': apiKey,
+      'anthropic-version': '2023-06-01',
+    },
+    body: JSON.stringify({
+      model: 'claude-haiku-4-5-20251001',
+      max_tokens: 128,
+      system: `You categorize inbound SMS replies from voters in a political campaign. Respond with JSON only, no other text.
+
+Categories: positive, negative, question, opt_out, scheduling, wrong_number, other
+Sentiment: positive, negative, neutral
+Confidence: 0.0 to 1.0
+
+Format: {"category":"...","sentiment":"...","confidence":0.0}`,
+      messages: [
+        { role: 'user', content: `Categorize this voter reply:\n"${message}"` },
+      ],
+    }),
+  })
+
+  if (!response.ok) {
+    throw new Error(`AI categorization failed: ${response.status}`)
+  }
+
+  const data = await response.json()
+  const textBlock = data.content?.find((block: { type: string }) => block.type === 'text')
+  if (!textBlock?.text) {
+    throw new Error('No text returned from AI categorization.')
+  }
+
+  return JSON.parse(textBlock.text.trim())
+}
+
 interface GenerateScriptParams {
   campaignName: string
   campaignDescription: string

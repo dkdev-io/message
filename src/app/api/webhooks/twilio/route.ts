@@ -47,14 +47,29 @@ export async function POST(request: Request) {
     .single()
 
   if (voter) {
-    await supabase.from('messages').insert({
+    const { data: insertedMsg } = await supabase.from('messages').insert({
       campaign_id: voter.campaign_id,
       voter_id: voter.id,
       direction: 'inbound',
       status: 'received',
       body,
       twilio_sid: messageSid,
-    })
+    }).select('id').single()
+
+    // Categorize reply in background (fire-and-forget)
+    if (insertedMsg) {
+      import('@/lib/services/ai').then(({ categorizeReply }) => {
+        categorizeReply(body).then((result) => {
+          supabase.from('messages').update({
+            category: result.category,
+            sentiment: result.sentiment,
+            ai_confidence: result.confidence,
+          }).eq('id', insertedMsg.id).then(() => {})
+        }).catch((err) => {
+          console.error('Reply categorization failed:', err)
+        })
+      })
+    }
   }
 
   return new Response(

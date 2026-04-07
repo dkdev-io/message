@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
-import { ArrowLeft, Pencil, Trash2, Play, Pause, CheckCircle, FileText, Users, MessageSquare, GitBranch, FolderOpen, Rocket, Send, Shield } from 'lucide-react'
+import { ArrowLeft, Pencil, Trash2, Play, Pause, CheckCircle, FileText, Users, MessageSquare, GitBranch, FolderOpen, Rocket, Send, Shield, Network } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
 import { updateCampaignStatus } from '@/lib/actions/campaigns'
 import DeleteCampaignButton from '@/components/dashboard/DeleteCampaignButton'
@@ -14,6 +14,7 @@ import QuickSend from '@/components/dashboard/QuickSend'
 import ScriptPdfExport from '@/components/dashboard/ScriptPdfExport'
 import TenDlcSetup from '@/components/dashboard/TenDlcSetup'
 import CampaignAnalytics from '@/components/dashboard/CampaignAnalytics'
+import ScriptTree from '@/components/dashboard/ScriptTree'
 
 export default async function CampaignDetailPage({
   params,
@@ -336,6 +337,23 @@ export default async function CampaignDetailPage({
           campaignId={id}
           initialScript={activeScript?.body ?? ''}
           versions={versions}
+        />
+      </div>
+
+      {/* Conversation Flow (Decision Tree) */}
+      <div className="bg-[var(--color-surface)] rounded-xl border border-[var(--color-muted)]/20 p-6">
+        <div className="flex items-center gap-2 mb-4">
+          <Network size={18} className="text-[var(--color-accent)]" />
+          <h2 className="font-display text-lg text-[var(--color-text)]">CONVERSATION FLOW</h2>
+        </div>
+        <ScriptTree
+          script={activeScript?.body ?? 'No active script'}
+          branches={(responseBranches ?? []).map((b) => ({
+            id: b.id,
+            label: b.label,
+            keywords: b.keywords,
+            response_body: b.response_body,
+          }))}
         />
       </div>
 
